@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HydroLogic — Panduan Install untuk Crew</title>
+<style>
+  :root{ --navy:#16335f; --blue:#2563b0; --teal:#2aa9b8; --ink:#1a1f29; --muted:#6b7280; --line:#e3e7ee; --amber:#e65100; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:#eef1f6; padding:16px; }
+  .sheet{ width:210mm; min-height:297mm; margin:0 auto; background:#fff; padding:16mm 16mm 12mm; box-shadow:0 4px 24px rgba(16,42,80,.12); }
+  .head{ display:flex; align-items:center; gap:14px; border-bottom:3px solid var(--navy); padding-bottom:12px; }
+  .head img{ width:54px; height:54px; }
+  .head h1{ font-size:24px; color:var(--navy); letter-spacing:.2px; }
+  .head p{ font-size:13px; color:var(--muted); margin-top:2px; }
+  .qrbox{ display:flex; gap:20px; align-items:center; background:linear-gradient(135deg,#f3f7fc,#eaf3f5); border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin:18px 0; }
+  .qrbox img{ width:150px; height:150px; border:6px solid #fff; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.12); background:#fff; }
+  .qrbox .t1{ font-size:18px; font-weight:800; color:var(--navy); }
+  .qrbox .t2{ font-size:13px; color:var(--muted); margin:6px 0 10px; }
+  .url{ display:inline-block; font-size:14px; font-weight:700; color:#fff; background:var(--blue); padding:8px 14px; border-radius:8px; word-break:break-all; }
+  .cols{ display:flex; gap:16px; margin-top:6px; }
+  .col{ flex:1; border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .col h2{ font-size:15px; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .col.an h2{ color:#1f7a33; } .col.io h2{ color:#0b6ea8; }
+  .col ol{ margin-left:18px; font-size:13.5px; line-height:1.7; }
+  .col .badge{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; }
+  .an .badge{ background:#e7f6ec; color:#1f7a33; } .io .badge{ background:#e7f2fb; color:#0b6ea8; }
+  .penting{ margin-top:16px; background:#fff8ec; border:1px solid #ffd9a8; border-left:5px solid var(--amber); border-radius:10px; padding:12px 16px; }
+  .penting b{ color:var(--amber); } .penting p{ font-size:13px; line-height:1.6; margin-top:3px; }
+  .usage{ margin-top:16px; }
+  .usage h2{ font-size:15px; color:var(--navy); margin-bottom:10px; }
+  .steps{ display:flex; gap:10px; }
+  .step{ flex:1; text-align:center; border:1px solid var(--line); border-radius:10px; padding:12px 8px; }
+  .step .n{ width:26px; height:26px; border-radius:50%; background:var(--navy); color:#fff; font-weight:700; font-size:13px; display:grid; place-items:center; margin:0 auto 6px; }
+  .step .ic{ font-size:22px; } .step .lb{ font-size:12px; margin-top:4px; color:var(--ink); font-weight:600; }
+  .foot{ margin-top:18px; border-top:1px solid var(--line); padding-top:10px; font-size:11.5px; color:var(--muted); display:flex; justify-content:space-between; }
+  @media print{ body{ background:#fff; padding:0; } .sheet{ box-shadow:none; margin:0; } @page{ size:A4; margin:0; } }
+</style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="head">
+      <img src="assets/icons/icon-192.png" alt="HydroLogic" />
+      <div>
+        <h1>HydroLogic</h1>
+        <p>Aplikasi Monitoring Hidrologi — Panduan Pemasangan untuk Crew Lapangan</p>
+      </div>
+    </div>
+
+    <div class="qrbox">
+      <img src="assets/qr-install.png" alt="QR Code" />
+      <div>
+        <div class="t1">📷 Scan QR ini dengan kamera HP</div>
+        <div class="t2">Arahkan kamera ke kode di samping, lalu ketuk link yang muncul. Atau ketik alamat ini di browser:</div>
+        <span class="url">henysetianingrum16.github.io/hydrologic</span>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="col an">
+        <h2>🤖 HP Android <span class="badge">Chrome</span></h2>
+        <ol>
+          <li>Scan QR / buka link di <b>Chrome</b></li>
+          <li>Ketuk menu <b>⋮</b> (kanan atas)</li>
+          <li>Pilih <b>“Install app”</b> / <b>“Tambahkan ke layar utama”</b></li>
+          <li>Ikon <b>HydroLogic</b> muncul di layar HP</li>
+        </ol>
+      </div>
+      <div class="col io">
+        <h2>🍎 iPhone <span class="badge">Safari</span></h2>
+        <ol>
+          <li>Scan QR / buka link di <b>Safari</b></li>
+          <li>Ketuk tombol <b>Bagikan</b> (kotak panah ke atas)</li>
+          <li>Pilih <b>“Add to Home Screen”</b></li>
+          <li>Ketuk <b>“Add”</b> — ikon muncul di layar</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="penting">
+      <b>⚠️ PENTING — lakukan saat masih ada sinyal</b>
+      <p>Buka aplikasi <b>sekali dulu saat ada sinyal/WiFi</b> (di kamp atau kantor) sampai halaman terbuka penuh. Sesudah itu aplikasi bisa dipakai <b>OFFLINE di lapangan</b> — input &amp; simpan data tetap jalan tanpa sinyal, lalu otomatis tersinkron saat dapat sinyal lagi.</p>
+    </div>
+
+    <div class="usage">
+      <h2>Cara pakai harian</h2>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div class="ic">✍️</div><div class="lb">Isi “Nama pengukur” di Beranda</div></div>
+        <div class="step"><div class="n">2</div><div class="ic">🌊💧</div><div class="lb">Pilih menu Debit / MAT, input data</div></div>
+        <div class="step"><div class="n">3</div><div class="ic">💾</div><div class="lb">Ketuk Simpan (debit/elevasi otomatis)</div></div>
+        <div class="step"><div class="n">4</div><div class="ic">📄</div><div class="lb">Buat Laporan Harian → kirim ke WhatsApp</div></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>HydroLogic · bekerja offline · laporan PDF ke WhatsApp</span>
+      <span>Bantuan: hubungi tim Hidrologi &amp; Hidrogeologi</span>
+    </div>
+  </div>
+</body>
+</html>
