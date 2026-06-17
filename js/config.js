@@ -17,7 +17,12 @@ window.HL = window.HL || {};
 
 HL.config = {
   SUPABASE_URL: 'https://ctracgonxxfzarewtiya.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0cmFjZ29ueHhmemFyZXd0aXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MzYxODEsImV4cCI6MjA5NzIxMjE4MX0.s9enQZANazXwmU2zUIfGbMAp12jw40s5yJBVWeg1dqA'
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0cmFjZ29ueHhmemFyZXd0aXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MzYxODEsImV4cCI6MjA5NzIxMjE4MX0.s9enQZANazXwmU2zUIfGbMAp12jw40s5yJBVWeg1dqA',
+
+  // true  = crew langsung pakai TANPA login (sesi anonim otomatis). Nama pengukur diketik di Beranda.
+  //         WAJIB aktifkan "Anonymous sign-ins" di Supabase → Authentication → Sign In / Providers.
+  // false = pakai login email/password.
+  ANONYMOUS: true
 };
 
 // True only when real values have been filled in.

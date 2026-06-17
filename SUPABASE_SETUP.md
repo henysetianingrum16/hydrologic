@@ -35,7 +35,14 @@ Panduan menghubungkan aplikasi ke backend Supabase: login per orang + sync data 
    - Untuk uji coba cepat, **matikan "Confirm email"** supaya akun langsung aktif tanpa verifikasi email.
    - Untuk produksi, biarkan **aktif** (user harus konfirmasi via email).
 
-## 5. Buat akun crew/engineer
+## 4b. (Mode TANPA LOGIN untuk crew) — aktifkan Anonymous sign-ins
+Jika `js/config.js` di-set `ANONYMOUS: true`, crew memakai app **tanpa login** (sesi anonim otomatis). Agar data tetap sync ke cloud:
+1. **Authentication → Sign In / Providers** → cari **"Anonymous sign-ins"** → **Enable** → Save.
+2. Tanpa ini: app tetap jalan tapi data hanya tersimpan lokal (indikator "Lokal"), belum naik ke server.
+
+Nama pengukur tidak lewat login — crew mengetiknya di **Beranda → "Nama pengukur"** (tersimpan di perangkat, dipakai di laporan & rekap).
+
+## 5. Buat akun crew/engineer (hanya jika pakai login email, `ANONYMOUS: false`)
 Dua cara:
 - **Lewat aplikasi:** buka app → tab **Daftar** → isi nama, email, password.
 - **Lewat dashboard:** Authentication → **Add user** → isi email & password manual.

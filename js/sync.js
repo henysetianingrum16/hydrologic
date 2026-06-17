@@ -20,7 +20,10 @@ HL.sync = (function () {
     if (HL.auth && HL.auth.localMode()) { setPill('offline', 'Mode lokal'); return; }
     if (syncing) { setPill('syncing', 'Sinkron…'); return; }
     if (!navigator.onLine) { setPill('offline', pending ? `Offline · ${pending} antri` : 'Offline'); return; }
-    if (HL.auth && !HL.auth.isAuthed()) { setPill('offline', 'Belum login'); return; }
+    if (HL.auth && !HL.auth.isAuthed()) {
+      setPill('offline', HL.auth.anonymousMode() ? (pending ? `Lokal · ${pending}` : 'Lokal') : 'Belum login');
+      return;
+    }
     setPill('online', pending ? `${pending} antri` : 'Tersinkron');
   }
 

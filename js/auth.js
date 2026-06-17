@@ -25,18 +25,32 @@ HL.auth = (function () {
     } catch (e) { /* offline: keep cached name */ }
   }
 
+  function anonymousMode() { return !localMode() && HL.config.ANONYMOUS === true; }
+  function isAnonymous() { return !!(_user && _user.is_anonymous); }
+
   async function init() {
     if (localMode()) return { authed: true, localMode: true };
     const sb = HL.sb();
     const { data } = await sb.auth.getSession();
     _user = data?.session?.user || null;
+    // No session + anonymous mode -> create a background anonymous session (no login screen).
+    if (!_user && anonymousMode()) {
+      try {
+        const { data: anon, error } = await sb.auth.signInAnonymously();
+        if (error) throw error;
+        _user = anon.user;
+      } catch (e) {
+        console.warn('anonymous sign-in gagal (aktifkan di Supabase):', e.message || e);
+      }
+    }
     if (_user) await loadProfile();
     sb.auth.onAuthStateChange((_evt, session) => {
       _user = session?.user || null;
-      if (_user) loadProfile();
+      if (_user && !_user.is_anonymous) loadProfile();
       else _profile = null;
     });
-    return { authed: !!_user, localMode: false };
+    // In anonymous mode we never block with a login screen.
+    return { authed: anonymousMode() || !!_user, localMode: false };
   }
 
   async function signIn(email, password) {
@@ -127,5 +141,5 @@ HL.auth = (function () {
     };
   }
 
-  return { init, signIn, signUp, signOut, renderLogin, user, isAuthed, localMode, crewName, role, loadProfile };
+  return { init, signIn, signUp, signOut, renderLogin, user, isAuthed, localMode, anonymousMode, isAnonymous, crewName, role, loadProfile };
 })();

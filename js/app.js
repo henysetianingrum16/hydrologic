@@ -77,14 +77,20 @@ window.HL = window.HL || {};
         </button>
       </div>
 
-      ${HL.auth.localMode() ? '' : `
       <div class="card" style="margin-top:12px">
-        <div class="kv"><span class="muted small">Masuk sebagai</span><b class="small">${HL.crew()}</b></div>
-        <button class="btn btn--ghost btn--sm" id="home-signout" style="margin-top:8px">Keluar</button>
-      </div>`}
+        <label>Nama pengukur</label>
+        <input id="home-crew" value="${HL.crew()}" placeholder="Nama crew"/>
+        <div class="field-hint">Dipakai sebagai nama pengukur di laporan & rekap</div>
+        ${(!HL.auth.localMode() && !HL.auth.isAnonymous()) ? '<button class="btn btn--ghost btn--sm" id="home-signout" style="margin-top:10px">Keluar</button>' : ''}
+      </div>
     </div>`;
 
     root.querySelector('#home-report').onclick = () => HL.report.generateDaily(today);
+    const crewInput = root.querySelector('#home-crew');
+    if (crewInput) crewInput.onchange = (e) => {
+      localStorage.setItem('hl_crew', e.target.value.trim() || 'Crew Lapangan');
+      HL.go('home');
+    };
     const so = root.querySelector('#home-signout');
     if (so) so.onclick = async () => { await HL.auth.signOut(); location.reload(); };
   }
