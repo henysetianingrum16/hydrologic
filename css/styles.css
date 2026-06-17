@@ -163,6 +163,17 @@ input.big { font-size: 22px; font-weight: 700; text-align: center; }
 .rec__main b { font-size: 14px; }
 .rec__main span { display: block; font-size: 11.5px; color: var(--muted); }
 .rec__val { text-align: right; font-weight: 700; color: var(--navy); white-space: nowrap; }
+.rec--col { flex-direction: column; align-items: stretch; gap: 8px; }
+.rec__top { display: flex; align-items: center; gap: 10px; }
+.rec__top .rec__main { flex: 1; min-width: 0; }
+.rec-actions { display: flex; gap: 6px; }
+.rec-act {
+  flex: 1; border: 1px solid var(--line); background: #fff; cursor: pointer;
+  font-family: inherit; font-size: 12px; font-weight: 600; color: var(--navy);
+  padding: 8px 4px; border-radius: 9px; transition: background .1s;
+}
+.rec-act:active { background: var(--bg); }
+.rec-act--danger { color: var(--red); border-color: #f3d2d2; }
 
 /* ---------- Toast ---------- */
 .toast {

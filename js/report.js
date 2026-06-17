@@ -307,15 +307,35 @@ HL.report = (function () {
     return result;
   }
 
-  async function generateSingle(rec) {
+  function singleDoc(rec) {
     const pages = rec.type === 'discharge' ? [{ type: 'discharge', rec }] : [{ type: 'gwl', recs: [rec] }];
-    const doc = await build({ pages });
     const fname = `${rec.type === 'discharge' ? 'Debit' : 'MAT'}_${(rec.stationId || rec.wellId)}_${rec.date.replace(/-/g, '')}.pdf`;
+    return build({ pages }).then((doc) => ({ doc, fname }));
+  }
+
+  // Share (WhatsApp / share sheet) with download fallback.
+  async function generateSingle(rec) {
+    const { doc, fname } = await singleDoc(rec);
     const result = await share(doc, fname);
     HL.toast(result === 'shared' ? 'Laporan dibagikan' : result === 'downloaded' ? 'PDF diunduh' : 'Dibatalkan',
       result === 'cancelled' ? 'err' : 'ok');
     return result;
   }
 
-  return { generateDaily, generateSingle, build };
+  // Force a file download.
+  async function downloadSingle(rec) {
+    const { doc, fname } = await singleDoc(rec);
+    doc.save(fname);
+    HL.toast('PDF diunduh', 'ok');
+  }
+
+  // Open the PDF in a new tab to preview it.
+  async function viewSingle(rec) {
+    const { doc } = await singleDoc(rec);
+    const url = doc.output('bloburl');
+    const w = window.open(url, '_blank');
+    if (!w) { doc.save((rec.stationId || rec.wellId) + '.pdf'); HL.toast('Popup diblokir — PDF diunduh', 'err'); }
+  }
+
+  return { generateDaily, generateSingle, downloadSingle, viewSingle, build };
 })();

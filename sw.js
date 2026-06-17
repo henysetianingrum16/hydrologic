@@ -1,18 +1,22 @@
 /* HydroLogic Service Worker — offline-first cache */
-const CACHE = 'hydrologic-v2';
+const CACHE = 'hydrologic-v5';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/styles.css',
+  './js/config.js',
   './js/db.js',
   './js/stations.js',
+  './js/auth.js',
   './js/sync.js',
   './js/discharge.js',
   './js/gwl.js',
+  './js/dashboard.js',
   './js/report.js',
   './js/app.js',
   './js/vendor/jspdf.umd.min.js',
+  './js/vendor/supabase.js',
   './assets/logo.png',
   './assets/icons/icon-96.png',
   './assets/icons/icon-192.png',
@@ -24,7 +28,12 @@ const ASSETS = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      // Fetch fresh copies (bypass HTTP cache) so we never cache stale assets.
+      .then((c) => Promise.all(ASSETS.map((u) =>
+        fetch(new Request(u, { cache: 'reload' })).then((res) => c.put(u, res)).catch(() => {})
+      )))
+      .then(() => self.skipWaiting())
   );
 });
 
