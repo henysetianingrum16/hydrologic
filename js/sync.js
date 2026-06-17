@@ -113,7 +113,10 @@ HL.sync = (function () {
 
   function init() {
     applyCachedMaster();
-    window.addEventListener('online', () => { refresh(); pullMaster(); flush(); });
+    window.addEventListener('online', async () => {
+      if (HL.auth && HL.auth.ensureAnonymous) await HL.auth.ensureAnonymous();
+      refresh(); pullMaster(); flush();
+    });
     window.addEventListener('offline', refresh);
     document.addEventListener('hl:saved', () => { refresh(); flush(); });
     refresh();

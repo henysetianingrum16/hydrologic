@@ -28,28 +28,35 @@ HL.auth = (function () {
   function anonymousMode() { return !localMode() && HL.config.ANONYMOUS === true; }
   function isAnonymous() { return !!(_user && _user.is_anonymous); }
 
+  // Create a background anonymous session — ONLINE ONLY (never blocks offline startup).
+  async function ensureAnonymous() {
+    if (!anonymousMode() || _user || !navigator.onLine) return;
+    const sb = HL.sb(); if (!sb) return;
+    try {
+      const { data, error } = await sb.auth.signInAnonymously();
+      if (error) throw error;
+      _user = data.user;
+    } catch (e) {
+      console.warn('anonymous sign-in gagal (aktifkan di Supabase):', e.message || e);
+    }
+  }
+
   async function init() {
     if (localMode()) return { authed: true, localMode: true };
     const sb = HL.sb();
-    const { data } = await sb.auth.getSession();
-    _user = data?.session?.user || null;
-    // No session + anonymous mode -> create a background anonymous session (no login screen).
-    if (!_user && anonymousMode()) {
-      try {
-        const { data: anon, error } = await sb.auth.signInAnonymously();
-        if (error) throw error;
-        _user = anon.user;
-      } catch (e) {
-        console.warn('anonymous sign-in gagal (aktifkan di Supabase):', e.message || e);
-      }
-    }
-    if (_user) await loadProfile();
+    if (!sb) return { authed: true, localMode: false };  // supabase lib tak termuat -> jalan lokal
+    try {
+      const { data } = await sb.auth.getSession();        // baca localStorage (tanpa jaringan)
+      _user = data?.session?.user || null;
+    } catch (e) { _user = null; }
+    await ensureAnonymous();                               // offline -> dilewati, tidak menggantung
+    if (_user && !_user.is_anonymous) await loadProfile();
     sb.auth.onAuthStateChange((_evt, session) => {
       _user = session?.user || null;
       if (_user && !_user.is_anonymous) loadProfile();
-      else _profile = null;
+      else if (!_user) _profile = null;
     });
-    // In anonymous mode we never block with a login screen.
+    // Mode anonim tidak pernah memblokir dengan layar login.
     return { authed: anonymousMode() || !!_user, localMode: false };
   }
 
@@ -141,5 +148,5 @@ HL.auth = (function () {
     };
   }
 
-  return { init, signIn, signUp, signOut, renderLogin, user, isAuthed, localMode, anonymousMode, isAnonymous, crewName, role, loadProfile };
+  return { init, ensureAnonymous, signIn, signUp, signOut, renderLogin, user, isAuthed, localMode, anonymousMode, isAnonymous, crewName, role, loadProfile };
 })();

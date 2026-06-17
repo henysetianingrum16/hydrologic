@@ -1,5 +1,5 @@
 /* HydroLogic Service Worker — offline-first cache */
-const CACHE = 'hydrologic-v6';
+const CACHE = 'hydrologic-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -49,6 +49,9 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const { request } = e;
   if (request.method !== 'GET') return;
+  // Let cross-origin requests (e.g. Supabase API) go straight to the network —
+  // don't try to serve/replace them from cache.
+  if (new URL(request.url).origin !== self.location.origin) return;
   e.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
