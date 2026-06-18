@@ -44,11 +44,21 @@ HL.exportExcel = (function () {
 
   function sortByDate(a, b) { return (a.date || '').localeCompare(b.date || ''); }
 
-  return async function exportExcel() {
+  // opts: { from:'YYYY-MM', to:'YYYY-MM' } — keduanya opsional. Tanpa opts = semua data.
+  return async function exportExcel(opts) {
     if (!window.XLSX) { HL.toast('Library Excel belum termuat', 'err'); return; }
     HL.toast('Menyiapkan Excel…');
-    const { discharge, gwl } = await fetchAll();
-    if (!discharge.length && !gwl.length) { HL.toast('Belum ada data untuk diekspor', 'err'); return; }
+    let { discharge, gwl } = await fetchAll();
+
+    let from = opts && opts.from, to = opts && opts.to;
+    if (from && to && from > to) { const t = from; from = to; to = t; }   // tukar kalau terbalik
+    const inRange = (r) => {
+      const m = (r.date || '').slice(0, 7);
+      return (!from || m >= from) && (!to || m <= to);
+    };
+    if (from || to) { discharge = discharge.filter(inRange); gwl = gwl.filter(inRange); }
+
+    if (!discharge.length && !gwl.length) { HL.toast('Tidak ada data pada rentang itu', 'err'); return; }
 
     const wb = XLSX.utils.book_new();
 
@@ -92,8 +102,9 @@ HL.exportExcel = (function () {
       XLSX.utils.book_append_sheet(wb, ws3, 'Detail Debit per Segmen');
     }
 
-    const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    XLSX.writeFile(wb, `Rekap_HydroLogic_${stamp}.xlsx`);
+    let suffix = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    if (from || to) suffix = (from || 'awal').replace('-', '') + '-' + (to || 'akhir').replace('-', '');
+    XLSX.writeFile(wb, `Rekap_HydroLogic_${suffix}.xlsx`);
     HL.toast('Excel terunduh', 'ok');
   };
 })();

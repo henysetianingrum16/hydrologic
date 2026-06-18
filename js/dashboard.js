@@ -9,6 +9,8 @@ HL.dashboard = (function () {
   function todayStr() { return new Date().toISOString().slice(0, 10); }
   function monthStr() { return new Date().toISOString().slice(0, 7); }
   function dShort(s) { const p = (s || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] : s; }
+  const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  function monthLabel(m) { const p = (m || '').split('-'); return p.length === 2 ? MO[+p[1] - 1] + ' ' + p[0] : m; }
 
   function normD(r) { return { type: 'discharge', id: r.id, stationId: r.station_id, lokasi: r.lokasi, titik: r.titik, date: r.date, qLs: Number(r.q_ls), rainfall: r.rainfall == null ? null : Number(r.rainfall), crew: r.crew, time: r.time, created_at: r.created_at }; }
   function normG(r) { return { type: 'gwl', id: r.id, wellId: r.well_id, area: r.area, date: r.date, elevation: Number(r.elevation), depth: Number(r.depth), crew: r.crew, time: r.time, created_at: r.created_at }; }
@@ -156,6 +158,12 @@ HL.dashboard = (function () {
     const gWells = HL.wells.filter((w) => w.active !== false);
     const defG = topKey(countBy(gwl, 'wellId')) || (gWells[0] && gWells[0].id);
 
+    // bulan yang punya data (untuk dropdown rentang export)
+    const months = [...new Set([...discharge, ...gwl].map((r) => (r.date || '').slice(0, 7)).filter(Boolean))].sort();
+    if (!months.length) months.push(month);
+    const defFrom = months[0], defTo = months[months.length - 1];
+    const monthOptions = (sel) => months.map((m) => `<option value="${m}" ${m === sel ? 'selected' : ''}>${monthLabel(m)}</option>`).join('');
+
     const banner = source === 'local'
       ? `<div class="card" style="background:#fff4e0"><b class="small">Mode lokal</b><div class="small muted">Menampilkan data perangkat ini saja. Konfigurasikan Supabase untuk rekap semua crew.</div></div>`
       : `<div class="small muted" style="margin:0 2px 8px">Sumber: server · semua crew</div>`;
@@ -165,7 +173,15 @@ HL.dashboard = (function () {
       <button class="back-link" data-route="home">← Beranda</button>
       <div class="section-title">Dashboard Rekap</div>
       ${banner}
-      <button class="btn btn--green" id="dash-export" style="margin-bottom:12px">⬇ Download Excel (semua data)</button>
+      <div class="card" style="margin-bottom:12px">
+        <label>Download Excel — pilih rentang bulan</label>
+        <div class="row">
+          <div><span class="field-hint">Dari</span><select id="exp-from">${monthOptions(defFrom)}</select></div>
+          <div><span class="field-hint">Sampai</span><select id="exp-to">${monthOptions(defTo)}</select></div>
+        </div>
+        <button class="btn btn--green" id="dash-export" style="margin-top:10px">⬇ Download Excel</button>
+        <div class="field-hint" style="margin-top:4px">Kosongkan/biarkan penuh = semua data.</div>
+      </div>
       <div class="card">
         <div class="stat-row">
           <div class="stat"><b>${dToday}</b><span>Debit hari ini</span></div>
@@ -209,7 +225,10 @@ HL.dashboard = (function () {
     </div>`;
 
     const exp = root.querySelector('#dash-export');
-    if (exp) exp.onclick = () => HL.exportExcel();
+    if (exp) exp.onclick = () => HL.exportExcel({
+      from: root.querySelector('#exp-from') ? root.querySelector('#exp-from').value : null,
+      to: root.querySelector('#exp-to') ? root.querySelector('#exp-to').value : null
+    });
 
     const qSel = root.querySelector('#dash-q-sel');
     if (qSel) qSel.onchange = (e) => { root.querySelector('#dash-q-chart').innerHTML = renderDebitChart(e.target.value); };
