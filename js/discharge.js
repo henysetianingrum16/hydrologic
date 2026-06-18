@@ -9,7 +9,7 @@ HL.discharge = (function () {
 
   function blankState() {
     return {
-      stationId: HL.stations[0].id,
+      stationId: (HL.stations.find((s) => s.active !== false) || HL.stations[0]).id,
       date: todayStr(),
       widthCm: 95,
       weather: 'Cerah',
@@ -133,7 +133,7 @@ HL.discharge = (function () {
           <div>
             <label>Lokasi / Titik</label>
             <select id="d-station">
-              ${HL.stations.map((s) => `<option value="${s.id}" ${s.id === state.stationId ? 'selected' : ''}>${s.lokasi} — ${s.titik}</option>`).join('')}
+              ${HL.stations.filter((s) => s.active !== false).map((s) => `<option value="${s.id}" ${s.id === state.stationId ? 'selected' : ''}>${s.lokasi} — ${s.titik}</option>`).join('')}
             </select>
           </div>
           <div style="max-width:130px">
