@@ -1,0 +1,4 @@
+# Data operasional mentah — JANGAN di-push ke repo publik
+supabase/migrasi_data_historis.sql
+*_pdf_b64.txt
+_verify/
