@@ -52,7 +52,12 @@ HL.wells = [
 HL.getStation = (id) => HL.stations.find((s) => s.id === id);
 HL.getWell = (id) => HL.wells.find((w) => w.id === id);
 // Areas ordered by well count (Badak first). Wells: active first, then by id.
-HL.areas = () => ['Badak', 'Kembatang', 'Haraan', 'Menteu'].filter((a) => HL.wells.some((w) => w.area === a));
+// Areas derived dynamically from wells (known ones first, then any new area).
+HL.areas = () => {
+  const order = ['Badak', 'Kembatang', 'Haraan', 'Menteu'];
+  const present = [...new Set(HL.wells.map((w) => w.area).filter(Boolean))];
+  return [...order.filter((a) => present.includes(a)), ...present.filter((a) => !order.includes(a)).sort()];
+};
 HL.wellsByArea = (area) => HL.wells.filter((w) => w.area === area)
   .sort((a, b) => (b.active - a.active) || a.id.localeCompare(b.id));
 
