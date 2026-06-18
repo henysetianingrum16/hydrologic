@@ -1,5 +1,5 @@
 /* HydroLogic Service Worker — offline-first cache */
-const CACHE = 'hydrologic-v8';
+const CACHE = 'hydrologic-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -17,6 +17,8 @@ const ASSETS = [
   './js/app.js',
   './js/vendor/jspdf.umd.min.js',
   './js/vendor/supabase.js',
+  './js/vendor/xlsx.full.min.js',
+  './js/export.js',
   './assets/logo.png',
   './assets/icons/icon-96.png',
   './assets/icons/icon-192.png',

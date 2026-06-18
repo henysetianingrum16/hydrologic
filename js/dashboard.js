@@ -165,6 +165,7 @@ HL.dashboard = (function () {
       <button class="back-link" data-route="home">← Beranda</button>
       <div class="section-title">Dashboard Rekap</div>
       ${banner}
+      <button class="btn btn--green" id="dash-export" style="margin-bottom:12px">⬇ Download Excel (semua data)</button>
       <div class="card">
         <div class="stat-row">
           <div class="stat"><b>${dToday}</b><span>Debit hari ini</span></div>
@@ -206,6 +207,9 @@ HL.dashboard = (function () {
       <div class="section-title">Aktivitas Terbaru</div>
       <div class="card">${recent || '<div class="muted small center">Belum ada data</div>'}</div>
     </div>`;
+
+    const exp = root.querySelector('#dash-export');
+    if (exp) exp.onclick = () => HL.exportExcel();
 
     const qSel = root.querySelector('#dash-q-sel');
     if (qSel) qSel.onchange = (e) => { root.querySelector('#dash-q-chart').innerHTML = renderDebitChart(e.target.value); };
