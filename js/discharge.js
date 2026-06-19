@@ -113,15 +113,7 @@ HL.discharge = (function () {
     state._last = last;
     const delta = deltaHTML(c.qLs, last);
 
-    const segRows = state.segments.map((s, i) => `
-      <tr>
-        <td class="seg-idx">${i + 1}</td>
-        <td class="calc">${fmt(s.dist, 1)}</td>
-        <td><input inputmode="decimal" data-seg="${i}" data-f="depth" value="${s.depth}" placeholder="0"/></td>
-        <td><input inputmode="decimal" data-seg="${i}" data-f="vel" value="${s.vel}" placeholder="0"/></td>
-        <td class="calc">${fmt(c.rows[i].area, 4)}</td>
-        <td class="calc">${fmt(c.rows[i].q * 1000, 2)}</td>
-      </tr>`).join('');
+    const segRows = segRowsHTML();
 
     root.innerHTML = `
     <div class="fade-in">
@@ -145,7 +137,7 @@ HL.discharge = (function () {
           <div>
             <label>Lebar Sungai (cm)</label>
             <input inputmode="decimal" id="d-width" value="${state.widthCm}"/>
-            <div class="field-hint">Segmen: <b>${sw ?? '—'} cm</b> × <b>${state.segments.length}</b></div>
+            <div class="field-hint" id="d-seghint">Segmen: <b>${sw ?? '—'} cm</b> × <b>${state.segments.length}</b></div>
           </div>
           <div style="max-width:120px">
             <label>Cuaca</label>
@@ -216,13 +208,20 @@ HL.discharge = (function () {
     });
   }
 
-  function bind(root) {
-    root.querySelector('#d-station').onchange = (e) => { state.stationId = e.target.value; render(root); };
-    root.querySelector('#d-date').onchange = (e) => { state.date = e.target.value; };
-    root.querySelector('#d-weather').onchange = (e) => { state.weather = e.target.value; };
-    root.querySelector('#d-rain').oninput = (e) => { state.rainfall = e.target.value; };
-    root.querySelector('#d-note').oninput = (e) => { state.note = e.target.value; };
-    root.querySelector('#d-width').oninput = (e) => { state.widthCm = e.target.value; render(root); };
+  function segRowsHTML() {
+    const c = calc();
+    return state.segments.map((s, i) => `
+      <tr>
+        <td class="seg-idx">${i + 1}</td>
+        <td class="calc">${fmt(s.dist, 1)}</td>
+        <td><input inputmode="decimal" data-seg="${i}" data-f="depth" value="${s.depth}" placeholder="0"/></td>
+        <td><input inputmode="decimal" data-seg="${i}" data-f="vel" value="${s.vel}" placeholder="0"/></td>
+        <td class="calc">${fmt(c.rows[i].area, 4)}</td>
+        <td class="calc">${fmt(c.rows[i].q * 1000, 2)}</td>
+      </tr>`).join('');
+  }
+
+  function bindRows(root) {
     root.querySelectorAll('#d-rows input').forEach((inp) => {
       inp.oninput = (e) => {
         const i = +e.target.dataset.seg, f = e.target.dataset.f;
@@ -230,6 +229,28 @@ HL.discharge = (function () {
         liveUpdate(root);
       };
     });
+  }
+
+  // Width changed: rebuild ONLY the segment table + hint + chart/results.
+  // (Re-rendering the whole form would steal focus from the width input.)
+  function rebuildSegments(root) {
+    buildSegments();
+    root.querySelector('#d-rows').innerHTML = segRowsHTML();
+    bindRows(root);
+    const sw = HL.segmentWidth(state.widthCm);
+    const hint = root.querySelector('#d-seghint');
+    if (hint) hint.innerHTML = `Segmen: <b>${sw ?? '—'} cm</b> × <b>${state.segments.length}</b>`;
+    liveUpdate(root);
+  }
+
+  function bind(root) {
+    root.querySelector('#d-station').onchange = (e) => { state.stationId = e.target.value; render(root); };
+    root.querySelector('#d-date').onchange = (e) => { state.date = e.target.value; };
+    root.querySelector('#d-weather').onchange = (e) => { state.weather = e.target.value; };
+    root.querySelector('#d-rain').oninput = (e) => { state.rainfall = e.target.value; };
+    root.querySelector('#d-note').oninput = (e) => { state.note = e.target.value; };
+    root.querySelector('#d-width').oninput = (e) => { state.widthCm = e.target.value; rebuildSegments(root); };
+    bindRows(root);
     root.querySelector('#d-reset').onclick = () => { state = blankState(); render(root); };
     root.querySelector('#d-save').onclick = () => save(root);
   }
