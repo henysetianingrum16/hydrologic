@@ -67,8 +67,8 @@ window.HL = window.HL || {};
         </button>
         <button class="tile tile--data" data-route="records">
           <span class="tile__ico">📋</span>
-          <span class="tile__t">Data Tersimpan</span>
-          <span class="tile__d">${all.length} record</span>
+          <span class="tile__t">Data Hari Ini</span>
+          <span class="tile__d">${qToday + gToday} record hari ini</span>
         </button>
         <button class="tile tile--report" id="home-report">
           <span class="tile__ico">📄</span>
@@ -98,6 +98,9 @@ window.HL = window.HL || {};
   async function renderRecords(root) {
     const all = await HL.db.all();
     const today = todayStr();
+    // Tampilkan hanya data hari ini supaya tidak menumpuk. Data lama TIDAK dihapus —
+    // tetap tersimpan di perangkat & database, dan tetap muncul di Dashboard/Export.
+    const todays = all.filter((r) => r.date === today);
 
     const item = (r) => {
       const isQ = r.type === 'discharge';
@@ -132,9 +135,10 @@ window.HL = window.HL || {};
         <button class="btn btn--orange" id="rec-daily">📄 Buat & Kirim Laporan Harian</button>
       </div>
 
-      <div class="section-title">Data Tersimpan (${all.length})</div>
+      <div class="section-title">Data Hari Ini (${todays.length})</div>
       <div class="card">
-        ${all.length ? all.map(item).join('') : '<div class="center muted small" style="padding:20px 0">Belum ada data. Mulai dari menu Debit atau MAT.</div>'}
+        ${todays.length ? todays.map(item).join('') : '<div class="center muted small" style="padding:20px 0">Belum ada data hari ini. Mulai dari menu Debit atau MAT.</div>'}
+        <div class="small muted" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Daftar ini menampilkan data hari ini saja agar rapi. Data hari sebelumnya tetap tersimpan &amp; ada di menu <b>Rekap</b> + Export Excel.</div>
       </div>
     </div>`;
 
