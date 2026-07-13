@@ -111,6 +111,30 @@ HL.sync = (function () {
     } catch (e) { console.warn('pull master failed', e); }
   }
 
+  // Add a new master point (station/well) to Supabase + local cache. Requires online+auth.
+  // NOTE: needs an INSERT RLS policy on stations/wells (see supabase/schema.sql).
+  async function addStation(row) {
+    const sb = HL.sb();
+    if (!sb || !navigator.onLine || !HL.auth.isAuthed()) throw new Error('Perlu koneksi internet untuk menambah titik.');
+    const { error } = await sb.from('stations').insert({
+      id: row.id, lokasi: row.lokasi, titik: row.titik || null, lat: row.lat ?? null, lng: row.lng ?? null, active: true
+    });
+    if (error) throw error;
+    HL.stations.push({ id: row.id, lokasi: row.lokasi, titik: row.titik || '', lat: row.lat ?? null, lng: row.lng ?? null, active: true });
+    localStorage.setItem('hl_stations', JSON.stringify(HL.stations));
+  }
+  async function addWell(row) {
+    const sb = HL.sb();
+    if (!sb || !navigator.onLine || !HL.auth.isAuthed()) throw new Error('Perlu koneksi internet untuk menambah sumur.');
+    const { error } = await sb.from('wells').insert({
+      id: row.id, area: row.area, z: row.z, stick_up: row.stickUp ?? null,
+      x: row.x ?? null, y: row.y ?? null, tahun: row.tahun ?? null, active: true
+    });
+    if (error) throw error;
+    HL.wells.push({ id: row.id, area: row.area, z: Number(row.z), stickUp: row.stickUp ?? null, x: row.x ?? null, y: row.y ?? null, tahun: row.tahun ?? null, active: true });
+    localStorage.setItem('hl_wells', JSON.stringify(HL.wells));
+  }
+
   function init() {
     applyCachedMaster();
     window.addEventListener('online', async () => {
@@ -123,5 +147,5 @@ HL.sync = (function () {
     if (navigator.onLine) { pullMaster(); setTimeout(flush, 800); }
   }
 
-  return { init, refresh, flush, pullMaster, setPill };
+  return { init, refresh, flush, pullMaster, addStation, addWell, setPill };
 })();

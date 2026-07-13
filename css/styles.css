@@ -208,5 +208,18 @@ input.big { font-size: 22px; font-weight: 700; text-align: center; }
 .kv { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
 .kv b { color: var(--ink); }
 .back-link { background: none; border: none; color: var(--blue); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; }
+.addlink { background: none; border: none; color: var(--blue); font-weight: 700; cursor: pointer; font-size: 12.5px; padding: 6px 0 0; }
+
+/* ---------- Modal ---------- */
+.hl-modal-ov {
+  position: fixed; inset: 0; background: rgba(16,42,80,.45); z-index: 90;
+  display: flex; align-items: flex-end; justify-content: center; animation: fade .2s;
+}
+.hl-modal {
+  background: var(--card); width: 100%; max-width: 640px; border-radius: 18px 18px 0 0;
+  padding: 18px 18px 22px; max-height: 88vh; overflow: auto; box-shadow: 0 -4px 24px rgba(16,42,80,.2);
+}
+@media (min-width: 520px) { .hl-modal-ov { align-items: center; } .hl-modal { border-radius: 18px; } }
+.hl-modal h3 { margin: 0 0 2px; font-size: 17px; color: var(--navy); }
 .fade-in { animation: fade .25s ease; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } }

@@ -127,6 +127,7 @@ HL.discharge = (function () {
             <select id="d-station">
               ${HL.stations.filter((s) => s.active !== false).map((s) => `<option value="${s.id}" ${s.id === state.stationId ? 'selected' : ''}>${s.lokasi} — ${s.titik}</option>`).join('')}
             </select>
+            <button type="button" class="addlink" id="d-addstation">＋ Tambah titik baru</button>
           </div>
           <div style="max-width:130px">
             <label>Tanggal</label>
@@ -243,8 +244,54 @@ HL.discharge = (function () {
     liveUpdate(root);
   }
 
+  function openAddStation(root) {
+    HL.modal.open(`
+      <h3>Tambah Titik Debit</h3>
+      <div class="small muted" style="margin-bottom:8px">Titik baru tersimpan ke database & langsung bisa dipilih.</div>
+      <label>Kode / ID titik *</label>
+      <input id="ns-id" placeholder="mis. PIT04" autocomplete="off"/>
+      <label>Lokasi *</label>
+      <input id="ns-lokasi" placeholder="mis. Pit KK"/>
+      <label>Nama titik</label>
+      <input id="ns-titik" placeholder="mis. ST 04"/>
+      <div class="row">
+        <div><label>Lat</label><input id="ns-lat" inputmode="decimal" placeholder="opsional"/></div>
+        <div><label>Lng</label><input id="ns-lng" inputmode="decimal" placeholder="opsional"/></div>
+      </div>
+      <div id="ns-err" class="field-hint" style="color:var(--red);min-height:16px"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn--ghost btn--sm" id="ns-cancel">Batal</button>
+        <button class="btn" id="ns-save">Simpan Titik</button>
+      </div>`);
+    const g = (id) => document.getElementById(id);
+    const err = g('ns-err');
+    g('ns-cancel').onclick = () => HL.modal.close();
+    g('ns-save').onclick = async () => {
+      const id = g('ns-id').value.trim();
+      const lokasi = g('ns-lokasi').value.trim();
+      if (!id || !lokasi) { err.textContent = 'Kode ID & Lokasi wajib diisi.'; return; }
+      if (HL.getStation(id)) { err.textContent = 'Kode ID sudah dipakai.'; return; }
+      const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+      g('ns-save').disabled = true; err.textContent = '';
+      try {
+        await HL.sync.addStation({ id, lokasi, titik: g('ns-titik').value.trim(), lat: num(g('ns-lat').value), lng: num(g('ns-lng').value) });
+        HL.modal.close();
+        state.stationId = id;
+        HL.toast('Titik baru ditambahkan', 'ok');
+        render(root);
+      } catch (e) {
+        g('ns-save').disabled = false;
+        const m = (e && e.message) || String(e);
+        err.textContent = /row-level security|policy|permission/i.test(m)
+          ? 'Ditolak server. Jalankan SQL "izin tambah titik" dulu (lihat catatan).'
+          : m;
+      }
+    };
+  }
+
   function bind(root) {
     root.querySelector('#d-station').onchange = (e) => { state.stationId = e.target.value; render(root); };
+    root.querySelector('#d-addstation').onclick = () => openAddStation(root);
     root.querySelector('#d-date').onchange = (e) => { state.date = e.target.value; };
     root.querySelector('#d-weather').onchange = (e) => { state.weather = e.target.value; };
     root.querySelector('#d-rain').oninput = (e) => { state.rainfall = e.target.value; };

@@ -88,12 +88,17 @@ alter table public.profiles          enable row level security;
 alter table public.discharge_records enable row level security;
 alter table public.gwl_records       enable row level security;
 
--- Master data: semua user login boleh BACA (write hanya lewat SQL editor / service role).
+-- Master data: semua user login boleh BACA + TAMBAH titik baru (fitur "Tambah titik" di app).
+-- (Update/hapus master tetap hanya lewat SQL editor / service role.)
 drop policy if exists "read stations" on public.stations;
 create policy "read stations" on public.stations for select to authenticated using (true);
+drop policy if exists "insert stations" on public.stations;
+create policy "insert stations" on public.stations for insert to authenticated with check (true);
 
 drop policy if exists "read wells" on public.wells;
 create policy "read wells" on public.wells for select to authenticated using (true);
+drop policy if exists "insert wells" on public.wells;
+create policy "insert wells" on public.wells for insert to authenticated with check (true);
 
 -- Profiles: semua login boleh baca (untuk tampilkan nama pengukur); ubah hanya milik sendiri.
 drop policy if exists "read profiles" on public.profiles;

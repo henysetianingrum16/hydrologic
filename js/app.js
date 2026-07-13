@@ -13,6 +13,20 @@ window.HL = window.HL || {};
     toastTimer = setTimeout(() => { el.className = 'toast ' + type; }, 2600);
   };
 
+  // Simple modal overlay. Returns the overlay element; inner form binds its own buttons.
+  HL.modal = {
+    open(html) {
+      HL.modal.close();
+      const ov = document.createElement('div');
+      ov.className = 'hl-modal-ov'; ov.id = 'hl-modal-ov';
+      ov.innerHTML = `<div class="hl-modal">${html}</div>`;
+      ov.addEventListener('click', (e) => { if (e.target === ov) HL.modal.close(); });
+      document.body.appendChild(ov);
+      return ov;
+    },
+    close() { const ov = document.getElementById('hl-modal-ov'); if (ov) ov.remove(); }
+  };
+
   HL.crew = function () {
     return (HL.auth && HL.auth.crewName) ? HL.auth.crewName() : (localStorage.getItem('hl_crew') || 'Crew Lapangan');
   };

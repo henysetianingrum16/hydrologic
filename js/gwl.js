@@ -100,6 +100,7 @@ HL.gwl = (function () {
             <select id="g-well">
               ${HL.wellsByArea(state.area).map((w) => `<option value="${w.id}" ${w.id === state.wellId ? 'selected' : ''}>${w.id} — Z ${fmt(w.z, 2)}${w.active ? '' : ' (inaktif)'}</option>`).join('')}
             </select>
+            <button type="button" class="addlink" id="g-addwell">＋ Tambah sumur baru</button>
           </div>
           <div style="max-width:130px">
             <label>Tanggal</label>
@@ -145,7 +146,60 @@ HL.gwl = (function () {
     bind(root, last);
   }
 
+  function openAddWell(root) {
+    HL.modal.open(`
+      <h3>Tambah Sumur Pantau</h3>
+      <div class="small muted" style="margin-bottom:8px">Sumur baru tersimpan ke database & langsung bisa dipilih.</div>
+      <label>Hole ID *</label>
+      <input id="nw-id" placeholder="mis. DH20" autocomplete="off"/>
+      <label>Area *</label>
+      <input id="nw-area" list="nw-areas" value="${state.area}" placeholder="Badak / area baru"/>
+      <datalist id="nw-areas">${HL.areas().map((a) => `<option value="${a}"></option>`).join('')}</datalist>
+      <div class="row">
+        <div><label>Z / elevasi tanah (mdpl) *</label><input id="nw-z" inputmode="decimal" placeholder="mis. 215.40"/></div>
+        <div style="max-width:130px"><label>Stick up (m)</label><input id="nw-su" inputmode="decimal" value="0.5"/></div>
+      </div>
+      <div class="row">
+        <div><label>X (UTM)</label><input id="nw-x" inputmode="decimal" placeholder="opsional"/></div>
+        <div><label>Y (UTM)</label><input id="nw-y" inputmode="decimal" placeholder="opsional"/></div>
+      </div>
+      <label>Tahun konstruksi</label>
+      <input id="nw-tahun" inputmode="numeric" placeholder="opsional"/>
+      <div id="nw-err" class="field-hint" style="color:var(--red);min-height:16px"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn--ghost btn--sm" id="nw-cancel">Batal</button>
+        <button class="btn btn--green" id="nw-save">Simpan Sumur</button>
+      </div>`);
+    const g = (id) => document.getElementById(id);
+    const err = g('nw-err');
+    g('nw-cancel').onclick = () => HL.modal.close();
+    g('nw-save').onclick = async () => {
+      const id = g('nw-id').value.trim();
+      const area = g('nw-area').value.trim();
+      const z = parseFloat(g('nw-z').value);
+      if (!id || !area || !Number.isFinite(z)) { err.textContent = 'Hole ID, Area, & Z wajib diisi.'; return; }
+      if (HL.getWell(id)) { err.textContent = 'Hole ID sudah dipakai.'; return; }
+      const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+      const su = parseFloat(g('nw-su').value); const th = parseInt(g('nw-tahun').value, 10);
+      g('nw-save').disabled = true; err.textContent = '';
+      try {
+        await HL.sync.addWell({ id, area, z, stickUp: Number.isFinite(su) ? su : null, x: num(g('nw-x').value), y: num(g('nw-y').value), tahun: Number.isFinite(th) ? th : null });
+        HL.modal.close();
+        state.area = area; state.wellId = id; state.depth = '';
+        HL.toast('Sumur baru ditambahkan', 'ok');
+        render(root);
+      } catch (e) {
+        g('nw-save').disabled = false;
+        const m = (e && e.message) || String(e);
+        err.textContent = /row-level security|policy|permission/i.test(m)
+          ? 'Ditolak server. Jalankan SQL "izin tambah titik" dulu (lihat catatan).'
+          : m;
+      }
+    };
+  }
+
   function bind(root, last) {
+    root.querySelector('#g-addwell').onclick = () => openAddWell(root);
     root.querySelector('#g-area').onchange = (e) => {
       state.area = e.target.value;
       state.wellId = HL.wellsByArea(state.area)[0].id;
