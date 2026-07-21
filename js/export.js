@@ -6,6 +6,12 @@ HL.exportExcel = (function () {
 
   function num(v) { const n = Number(v); return Number.isFinite(n) ? n : null; }
 
+  // 'YYYY-MM-DD' -> 'DD/MM/YYYY' (kalau format lain, kembalikan apa adanya).
+  function dfmt(d) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : (d || '');
+  }
+
   // Normalisasi baris cloud (snake_case) & lokal (camelCase) ke satu bentuk.
   function normD(r) {
     return {
@@ -64,7 +70,7 @@ HL.exportExcel = (function () {
 
     // ---- Sheet 1: Rekap Debit ----
     const rd = discharge.slice().sort(sortByDate).map((r) => ({
-      'Tanggal': r.date, 'Lokasi': r.lokasi, 'ID Titik': r.stationId,
+      'Tanggal': dfmt(r.date), 'Lokasi': r.lokasi, 'ID Titik': r.stationId,
       'Debit (l/s)': r.qLs, 'Curah Hujan (mm)': r.rainfall,
       'Lebar (cm)': r.widthCm, 'Luas (m2)': r.totalArea, 'V rata2 (m/s)': r.vMean,
       'Cuaca': r.weather, 'Pengukur': r.crew, 'Waktu': r.time
@@ -77,7 +83,7 @@ HL.exportExcel = (function () {
     const rg = gwl.slice().sort(sortByDate).map((r) => {
       const w = HL.getWell ? HL.getWell(r.wellId) : null;
       return {
-        'Tanggal': r.date, 'Hole Id': r.wellId, 'Area': r.area,
+        'Tanggal': dfmt(r.date), 'Hole Id': r.wellId, 'Area': r.area,
         'Z (mdpl)': r.z, 'Stick Up (m)': r.stickUp, 'Depth GWL (m)': r.depth,
         'GWL Elevation (mdpl)': r.elevation, 'X': w ? w.x : null, 'Y': w ? w.y : null,
         'Pengukur': r.crew, 'Waktu': r.time
@@ -91,7 +97,7 @@ HL.exportExcel = (function () {
     const det = [];
     discharge.slice().sort(sortByDate).forEach((r) => {
       (r.segments || []).forEach((s, i) => det.push({
-        'Tanggal': r.date, 'Lokasi': r.lokasi, 'ID Titik': r.stationId, 'Segmen': i + 1,
+        'Tanggal': dfmt(r.date), 'Lokasi': r.lokasi, 'ID Titik': r.stationId, 'Segmen': i + 1,
         'Jarak (cm)': num(s.dist), 'Kedalaman (cm)': num(s.depth), 'Kecepatan (m/s)': num(s.vel),
         'Luas (m2)': num(s.area), 'Debit (l/s)': s.q != null ? num(s.q) * 1000 : null
       }));
