@@ -215,9 +215,36 @@ window.HL = window.HL || {};
     } else {
       startApp();
     }
-    if ('serviceWorker' in navigator) {
-      try { await navigator.serviceWorker.register('sw.js'); } catch (e) { console.warn('SW failed', e); }
-    }
+    registerSW();
   }
+
+  // Service worker + auto-update notification.
+  function showUpdateBanner() {
+    if (document.getElementById('hl-update')) return;
+    const b = document.createElement('div');
+    b.id = 'hl-update'; b.className = 'update-bar';
+    b.innerHTML = '<span>🔄 Versi baru tersedia</span><button id="hl-update-btn">Muat Ulang</button>';
+    document.body.appendChild(b);
+    document.getElementById('hl-update-btn').onclick = () => location.reload();
+  }
+
+  async function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          // New version installed while an old one is already controlling -> offer reload.
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdateBanner();
+        });
+      });
+      // Check for a new version periodically & when the app regains focus.
+      setInterval(() => reg.update().catch(() => {}), 60000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+    } catch (e) { console.warn('SW failed', e); }
+  }
+
   document.addEventListener('DOMContentLoaded', init);
 })();

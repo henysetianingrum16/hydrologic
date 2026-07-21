@@ -1,5 +1,5 @@
 /* HydroLogic Service Worker — offline-first cache */
-const CACHE = 'hydrologic-v17';
+const CACHE = 'hydrologic-v18';
 const ASSETS = [
   './',
   './index.html',
