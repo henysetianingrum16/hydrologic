@@ -6,10 +6,27 @@ HL.exportExcel = (function () {
 
   function num(v) { const n = Number(v); return Number.isFinite(n) ? n : null; }
 
-  // 'YYYY-MM-DD' -> 'DD/MM/YYYY' (kalau format lain, kembalikan apa adanya).
-  function dfmt(d) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
-    return m ? `${m[3]}/${m[2]}/${m[1]}` : (d || '');
+  // Ubah kolom "Tanggal" (teks 'YYYY-MM-DD') jadi SEL TANGGAL Excel asli, tampil dd/mm/yyyy.
+  // Pakai serial number (bebas timezone) supaya Excel mengenali sebagai Date, bukan General.
+  function dateCol(ws) {
+    if (!ws['!ref']) return;
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    let col = -1;
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const h = ws[XLSX.utils.encode_cell({ r: 0, c })];
+      if (h && h.v === 'Tanggal') { col = c; break; }
+    }
+    if (col < 0) return;
+    const EPOCH = Date.UTC(1899, 11, 30);
+    for (let r = 1; r <= range.e.r; r++) {
+      const addr = XLSX.utils.encode_cell({ r, c: col });
+      const cell = ws[addr];
+      if (!cell || cell.v == null || cell.v === '') continue;
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(cell.v));
+      if (!m) continue;
+      const serial = Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - EPOCH) / 86400000);
+      ws[addr] = { t: 'n', v: serial, z: 'dd/mm/yyyy' };
+    }
   }
 
   // Normalisasi baris cloud (snake_case) & lokal (camelCase) ke satu bentuk.
@@ -70,12 +87,13 @@ HL.exportExcel = (function () {
 
     // ---- Sheet 1: Rekap Debit ----
     const rd = discharge.slice().sort(sortByDate).map((r) => ({
-      'Tanggal': dfmt(r.date), 'Lokasi': r.lokasi, 'ID Titik': r.stationId,
+      'Tanggal': r.date, 'Lokasi': r.lokasi, 'ID Titik': r.stationId,
       'Debit (l/s)': r.qLs, 'Curah Hujan (mm)': r.rainfall,
       'Lebar (cm)': r.widthCm, 'Luas (m2)': r.totalArea, 'V rata2 (m/s)': r.vMean,
       'Cuaca': r.weather, 'Pengukur': r.crew, 'Waktu': r.time
     }));
     const ws1 = XLSX.utils.json_to_sheet(rd.length ? rd : [{ 'Tanggal': '', 'Lokasi': '' }]);
+    dateCol(ws1);
     ws1['!cols'] = [{ wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 11 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 8 }];
     XLSX.utils.book_append_sheet(wb, ws1, 'Rekap Debit');
 
@@ -83,13 +101,14 @@ HL.exportExcel = (function () {
     const rg = gwl.slice().sort(sortByDate).map((r) => {
       const w = HL.getWell ? HL.getWell(r.wellId) : null;
       return {
-        'Tanggal': dfmt(r.date), 'Hole Id': r.wellId, 'Area': r.area,
+        'Tanggal': r.date, 'Hole Id': r.wellId, 'Area': r.area,
         'Z (mdpl)': r.z, 'Stick Up (m)': r.stickUp, 'Depth GWL (m)': r.depth,
         'GWL Elevation (mdpl)': r.elevation, 'X': w ? w.x : null, 'Y': w ? w.y : null,
         'Pengukur': r.crew, 'Waktu': r.time
       };
     });
     const ws2 = XLSX.utils.json_to_sheet(rg.length ? rg : [{ 'Tanggal': '', 'Hole Id': '' }]);
+    dateCol(ws2);
     ws2['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 11 }, { wch: 12 }, { wch: 18 }, { wch: 11 }, { wch: 12 }, { wch: 16 }, { wch: 8 }];
     XLSX.utils.book_append_sheet(wb, ws2, 'Rekap MAT');
 
@@ -97,13 +116,14 @@ HL.exportExcel = (function () {
     const det = [];
     discharge.slice().sort(sortByDate).forEach((r) => {
       (r.segments || []).forEach((s, i) => det.push({
-        'Tanggal': dfmt(r.date), 'Lokasi': r.lokasi, 'ID Titik': r.stationId, 'Segmen': i + 1,
+        'Tanggal': r.date, 'Lokasi': r.lokasi, 'ID Titik': r.stationId, 'Segmen': i + 1,
         'Jarak (cm)': num(s.dist), 'Kedalaman (cm)': num(s.depth), 'Kecepatan (m/s)': num(s.vel),
         'Luas (m2)': num(s.area), 'Debit (l/s)': s.q != null ? num(s.q) * 1000 : null
       }));
     });
     if (det.length) {
       const ws3 = XLSX.utils.json_to_sheet(det);
+      dateCol(ws3);
       ws3['!cols'] = [{ wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 11 }, { wch: 13 }, { wch: 14 }, { wch: 10 }, { wch: 11 }];
       XLSX.utils.book_append_sheet(wb, ws3, 'Detail Debit per Segmen');
     }
