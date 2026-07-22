@@ -39,6 +39,7 @@ window.HL = window.HL || {};
     else if (route === 'gwl') { HL.gwl.reset(); HL.gwl.render(root); }
     else if (route === 'records') renderRecords(root);
     else if (route === 'dashboard') HL.dashboard.render(root);
+    else if (route === 'slugtest') HL.slugtest.render(root);
     else renderHome(root);
   };
 
@@ -88,6 +89,11 @@ window.HL = window.HL || {};
           <span class="tile__ico">📄</span>
           <span class="tile__t">Laporan Harian</span>
           <span class="tile__d">PDF → WhatsApp</span>
+        </button>
+        <button class="tile tile--slug" data-route="slugtest">
+          <span class="tile__ico">🧪</span>
+          <span class="tile__t">Slug Test</span>
+          <span class="tile__d">Hvorslev — K akuifer</span>
         </button>
       </div>
 

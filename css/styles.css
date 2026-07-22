@@ -89,6 +89,7 @@ main { padding: 14px; max-width: 640px; margin: 0 auto; }
 .tile--gwl { border-top: 3px solid var(--green-2); }
 .tile--report { border-top: 3px solid var(--orange); }
 .tile--data { border-top: 3px solid var(--teal); }
+.tile--slug { border-top: 3px solid #673ab7; }
 
 .stat-row { display: flex; gap: 10px; }
 .stat { flex: 1; text-align: center; }
