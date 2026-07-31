@@ -265,19 +265,117 @@ HL.slugtest = (function () {
     img.src = src;
   }
 
-  function exportPDF() {
+  // Ubah SVG grafik -> dataURL PNG (untuk disisipkan ke PDF). Async lewat callback.
+  function chartDataURL(root, cb) {
+    const svg = root.querySelector('#slug-chart svg');
+    if (!svg) { cb(null); return; }
+    const xml = new XMLSerializer().serializeToString(svg);
+    const src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(xml)));
+    const img = new Image();
+    img.onload = () => {
+      const sc = 2, vb = svg.viewBox.baseVal;
+      const cv = document.createElement('canvas'); cv.width = vb.width * sc; cv.height = vb.height * sc;
+      const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+      cb(cv.toDataURL('image/png'), vb.width, vb.height);
+    };
+    img.onerror = () => cb(null);
+    img.src = src;
+  }
+
+  // Laporan PDF lengkap: Input Data -> Analisis -> Grafik -> Interpretasi (paginasi otomatis).
+  function exportPDF(root) {
     const res = state._res || HL.slug.analyze(buildInput());
     if (!window.jspdf) { HL.toast('PDF belum siap', 'err'); return; }
-    const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(22, 51, 95);
-    doc.text('Slug Test — Analisis Hvorslev', 14, 16);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(60, 60, 60);
-    doc.text(`${state.lokasi || '-'}  •  Hole ID: ${state.holeId || '-'}  •  ${state.date}  •  ${state.jenis}`, 14, 23);
-    const lines = interpText(res).split('\n');
-    doc.setFontSize(9.5); doc.setTextColor(30, 30, 30);
-    let y = 34; lines.forEach((ln) => { const w = doc.splitTextToSize(ln, 182); w.forEach((t) => { doc.text(t, 14, y); y += 5; }); });
-    doc.save(`SlugTest_${state.holeId || 'data'}_${state.date.replace(/-/g, '')}.pdf`);
-    HL.toast('PDF diunduh', 'ok');
+    chartDataURL(root, (chartPng, cw, chh) => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+      const M = 14, W = 210, BOT = 284;
+      const NAVY = [22, 51, 95], MUT = [110, 115, 125], INK = [30, 30, 30], LINE = [220, 225, 232];
+      let y = 0;
+      const ensure = (h) => { if (y + h > BOT) { doc.addPage(); y = 16; } };
+      const sectionTitle = (t) => { ensure(14); doc.setTextColor(...NAVY); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(t, M, y + 2); y += 6; doc.setDrawColor(...LINE); doc.line(M, y, W - M, y); y += 6; };
+      const kv = (k, v) => { ensure(6); doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...MUT); doc.text(k, M, y); doc.setTextColor(...INK); doc.setFont('helvetica', 'bold'); doc.text(String(v), M + 74, y); y += 5.5; };
+
+      // ---- Header ----
+      doc.setFillColor(...NAVY); doc.rect(0, 0, W, 24, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+      doc.text('Slug Test — Analisis Hvorslev', M, 11);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text(`${state.lokasi || '-'}  •  Hole ID: ${state.holeId || '-'}  •  ${state.date}  •  ${state.jenis}${state.pencatat ? ('  •  ' + state.pencatat) : ''}`, M, 18);
+      y = 32;
+
+      // ---- 1. Input Data ----
+      sectionTitle('1 · Input Data');
+      kv('Jenis uji', state.jenis);
+      kv('Muka air statis (m dari TOC)', state.matStatic || '-');
+      kv('Panjang screen L (m)', state.L || '-');
+      kv('Ukuran pipa bor', state.pipe);
+      kv('R lubang bor (cm)', state.R);
+      kv('r riser (cm)', state.r);
+      y += 2;
+      const cols = [['No', 12], ['Interval (s)', 26], ['t kum (s)', 26], ['MAT (m)', 28], ['h (m)', 28], ['h/H₀', 26]];
+      const tableHeader = () => {
+        doc.setFillColor(...NAVY); doc.rect(M, y, W - 2 * M, 7, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+        let x = M; cols.forEach((c) => { doc.text(c[0], x + 2, y + 4.8); x += c[1]; }); y += 7;
+        doc.setTextColor(...INK); doc.setFont('helvetica', 'normal');
+      };
+      ensure(14); tableHeader();
+      res.rows.forEach((s, idx) => {
+        if (y + 5.5 > BOT) { doc.addPage(); y = 16; tableHeader(); }
+        if (idx % 2) { doc.setFillColor(245, 247, 250); doc.rect(M, y, W - 2 * M, 5.5, 'F'); }
+        let x = M; const vals = [s.no, s.interval, s.tcum, fmt(s.mat, 2), fmt(s.h, 3), fmt(s.ratio, 4)];
+        doc.setFontSize(8.5); vals.forEach((v, j) => { doc.text(String(v), x + 2, y + 4); x += cols[j][1]; }); y += 5.5;
+      });
+      y += 5;
+
+      // ---- 2. Analisis Hvorslev ----
+      sectionTitle('2 · Analisis Hvorslev');
+      kv('H₀ (m)', fmt(res.H0, 2));
+      kv('H₃₇ = 0,37·H₀ (m)', fmt(res.H37, 3));
+      kv('Bacaan MAT saat H₃₇ (m)', fmt(res.matAtH37, 3));
+      kv('L / R', fmt(res.LR, 1) + (res.LR != null && res.LR < 8 ? '  (TIDAK VALID)' : '  (valid)'));
+      kv('T₀ interpolasi (detik)', res.T0 != null ? res.T0.toFixed(1) : '-');
+      kv('T₀ regresi (detik) / R²', (res.T0reg != null ? res.T0reg.toFixed(1) : '-') + '  /  ' + (res.R2 != null ? res.R2.toFixed(3) : '-'));
+      kv('K (cm/detik)', sci(res.K_cms));
+      kv('K (m/detik)', sci(res.K_ms));
+      kv('K (m/hari)', res.K_mday != null ? fmt(res.K_mday, 5) : '-');
+      kv('Klasifikasi', res.classification.kelas + ' — ' + res.classification.material);
+      y += 3;
+      ensure(6); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...NAVY); doc.text('Cek mutu data:', M, y); y += 5.5;
+      res.checks.forEach((c) => {
+        ensure(5.2);
+        const col = c.status === 'block' ? [211, 47, 47] : c.status === 'warn' ? [230, 81, 0] : [76, 175, 80];
+        doc.setFillColor(...col); doc.circle(M + 1.6, y - 1.2, 1.3, 'F');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...INK);
+        doc.text(`${c.label}: ${c.detail}`, M + 6, y); y += 5.2;
+      });
+      y += 4;
+
+      // ---- 3. Grafik Semi-Log ----
+      sectionTitle('3 · Grafik Semi-Log (h/H₀ vs waktu)');
+      if (chartPng && cw) {
+        const imgW = 120, imgH = imgW * (chh / cw);
+        ensure(imgH + 4); doc.addImage(chartPng, 'PNG', M, y, imgW, imgH); y += imgH + 5;
+      } else { kv('Grafik', 'tidak tersedia'); }
+
+      // ---- 4. Interpretasi ----
+      sectionTitle('4 · Interpretasi');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...INK);
+      interpText(res).split('\n').forEach((ln) => {
+        const w = doc.splitTextToSize(ln, W - 2 * M);
+        w.forEach((t) => { ensure(5); doc.text(t, M, y); y += 5; });
+      });
+
+      // ---- Footer (nomor halaman) ----
+      const pc = doc.getNumberOfPages();
+      for (let p = 1; p <= pc; p++) {
+        doc.setPage(p); doc.setFontSize(7.5); doc.setTextColor(...MUT);
+        doc.text(`Dibuat oleh HydroLogic · Slug Test (Hvorslev) · hal. ${p}/${pc}`, M, 292);
+      }
+      doc.save(`SlugTest_${state.holeId || 'data'}_${state.date.replace(/-/g, '')}.pdf`);
+      HL.toast('PDF laporan diunduh', 'ok');
+    });
   }
 
   function loadExample() {
@@ -404,7 +502,7 @@ HL.slugtest = (function () {
     on('#s-png', 'onclick', () => chartPNG(root));
     on('#s-copy', 'onclick', () => copySummary());
     on('#s-csv', 'onclick', () => exportCSV());
-    on('#s-pdf', 'onclick', () => exportPDF());
+    on('#s-pdf', 'onclick', () => exportPDF(root));
     bindRows(root);
   }
 
